@@ -2,7 +2,7 @@ import { View, Text } from "react-native"
 import React from "react"
 import { Stack } from "expo-router"
 
-const TaskLayout = () => {
+const RecipesLayout = () => {
   return (
     <Stack screenOptions={{ animation: "fade_from_bottom" }}>
       <Stack.Screen
@@ -21,4 +21,4 @@ const TaskLayout = () => {
   )
 }
 
-export default TaskLayout
+export default RecipesLayout

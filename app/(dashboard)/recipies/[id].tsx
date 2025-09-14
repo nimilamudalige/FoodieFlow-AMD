@@ -1,5 +1,5 @@
 import { useLoader } from "@/context/LoaderContext"
-import { createTask, getTaskById, updateTask } from "@/services/taskService"
+import { createRecipe, getRecipeById, updateRecipe } from "@/services/recipeService"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import React, { useEffect, useState } from "react"
 import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native"

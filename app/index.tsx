@@ -1,4 +1,4 @@
-import { View, Text, Pressable, Button, ActivityIndicator } from "react-native"
+import { View, ActivityIndicator } from "react-native"
 import React, { useEffect } from "react"
 import { useRouter } from "expo-router"
 import { useAuth } from "@/context/AuthContext"
@@ -18,11 +18,16 @@ const Index = () => {
     }
   }, [user, loading])
 
-  return loading ? (
-    <View className="flex-1 w-full justify-center align-items-center">
-      <ActivityIndicator size="large" />
-    </View>
-  ) : null
+  if (loading) {
+    return (
+      <View className="flex-1 w-full justify-center items-center">
+        <ActivityIndicator size="large" />
+      </View>
+    )
+  }
+
+  // Optionally, return null or a splash screen while redirecting
+  return null
 }
 
 export default Index
