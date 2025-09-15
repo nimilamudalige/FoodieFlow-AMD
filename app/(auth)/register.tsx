@@ -1,86 +1,201 @@
 import {
   View,
   Text,
-  Pressable,
   TextInput,
   TouchableOpacity,
   Alert,
-  ActivityIndicator
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform
 } from "react-native"
 import React, { useState } from "react"
 import { useRouter } from "expo-router"
-import { register } from "@/services/authService"
+import { Ionicons } from "@expo/vector-icons"
+import { authService } from "@/services/authService"
+import { useLoader, LOADING_MESSAGES } from "@/context/LoaderContext"
 
 const Register = () => {
   const router = useRouter()
-  const [email, setEmail] = useState<string>("")
-  const [password, setPassword] = useState<string>("")
-  const [cPassword, setCPassword] = useState<string>("")
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const { showLoader, hideLoader } = useLoader()
+  
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const handleRegister = async () => {
-    // if(email)
-    // password
-    if (isLoading) return
-    if (password !== cPassword) {
-      Alert.alert("Title", "description")
-      return
+    try {
+      showLoader(LOADING_MESSAGES.SIGNING_UP)
+      
+      const registerData = {
+        name,
+        email,
+        password,
+        confirmPassword
+      }
+      
+      await authService.register(registerData)
+      
+      Alert.alert(
+        "Welcome to Recipe App!", 
+        "Your account has been created successfully!",
+        [{ text: "Get Started", onPress: () => router.replace("/(dashboard)/home") }]
+      )
+    } catch (error: any) {
+      Alert.alert(
+        "Registration Failed", 
+        error.message || "Something went wrong. Please try again."
+      )
+    } finally {
+      hideLoader()
     }
-    setIsLoading(true)
-    await register(email, password)
-      .then((res) => {
-        // const res = await register(email, password)
-        // success
-        router.back()
-      })
-      .catch((err) => {
-        Alert.alert("Registration failed", "Somthing went wrong")
-        console.error(err)
-      })
-      .finally(() => {
-        setIsLoading(false)
-      })
   }
 
   return (
-    <View className="flex-1 w-full justify-center align-items-center p-4">
-      <Text className="text-4xl text-center mb-2">Register</Text>
-      <TextInput
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        className="bg-surface border border-gray-300 rounded px-4 py-3 mb-4 text-gray-900"
-      />
-      <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        className="bg-surface border border-gray-300 rounded px-4 py-3 mb-4 text-gray-900"
-      />
-      <TextInput
-        placeholder="Confirm password"
-        value={cPassword}
-        onChangeText={setCPassword}
-        secureTextEntry
-        className="bg-surface border border-gray-300 rounded px-4 py-3 mb-4 text-gray-900"
-      />
-      <TouchableOpacity
-        onPress={handleRegister}
-        className="bg-green-600 p-4 rounded mt-2"
+    <KeyboardAvoidingView 
+      className="flex-1 bg-white"
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView 
+        className="flex-1"
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
       >
-        {isLoading ? (
-          <ActivityIndicator color="#fff" size="large" />
-        ) : (
-          <Text className="text-center text-2xl">Register</Text>
-        )}
-      </TouchableOpacity>
-      <Pressable className="px-6 py-3" onPress={() => router.back()}>
-        <Text className="text-xl text-center text-blue-500">
-          Alrady have an account? Login
-        </Text>
-      </Pressable>
-    </View>
+        <View className="flex-1 justify-center px-6 py-12">
+          
+          {/* Header Section */}
+          <View className="items-center mb-8">
+            <View className="w-20 h-20 bg-orange-100 rounded-full items-center justify-center mb-4">
+              <Ionicons name="restaurant" size={40} color="#FF6B35" />
+            </View>
+            
+            <Text className="text-3xl font-bold text-gray-900 mb-2">
+              Join Recipe App
+            </Text>
+            <Text className="text-base text-gray-600 text-center">
+              Create your account and start your culinary journey
+            </Text>
+          </View>
+
+          {/* Registration Form */}
+          <View className="space-y-4">
+            {/* Full Name Input */}
+            <View>
+              <Text className="text-sm font-medium text-gray-700 mb-2">
+                Full Name
+              </Text>
+              <View className="flex-row items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+                <Ionicons name="person-outline" size={20} color="#6B7280" />
+                <TextInput
+                  placeholder="Enter your full name"
+                  value={name}
+                  onChangeText={setName}
+                  autoCapitalize="words"
+                  className="flex-1 ml-3 text-gray-900 text-base"
+                />
+              </View>
+            </View>
+
+            {/* Email Input */}
+            <View>
+              <Text className="text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </Text>
+              <View className="flex-row items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+                <Ionicons name="mail-outline" size={20} color="#6B7280" />
+                <TextInput
+                  placeholder="Enter your email"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  className="flex-1 ml-3 text-gray-900 text-base"
+                />
+              </View>
+            </View>
+
+            {/* Password Input */}
+            <View>
+              <Text className="text-sm font-medium text-gray-700 mb-2">
+                Password
+              </Text>
+              <View className="flex-row items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+                <Ionicons name="lock-closed-outline" size={20} color="#6B7280" />
+                <TextInput
+                  placeholder="Create a password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  className="flex-1 ml-3 text-gray-900 text-base"
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  className="ml-2"
+                >
+                  <Ionicons 
+                    name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                    size={20} 
+                    color="#6B7280" 
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Confirm Password Input */}
+            <View>
+              <Text className="text-sm font-medium text-gray-700 mb-2">
+                Confirm Password
+              </Text>
+              <View className="flex-row items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+                <Ionicons name="lock-closed-outline" size={20} color="#6B7280" />
+                <TextInput
+                  placeholder="Confirm your password"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!showConfirmPassword}
+                  className="flex-1 ml-3 text-gray-900 text-base"
+                />
+                <TouchableOpacity
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="ml-2"
+                >
+                  <Ionicons 
+                    name={showConfirmPassword ? "eye-off-outline" : "eye-outline"} 
+                    size={20} 
+                    color="#6B7280" 
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          {/* Register Button */}
+          <TouchableOpacity
+            onPress={handleRegister}
+            className="bg-orange-500 rounded-xl py-4 mt-8 shadow-lg"
+            activeOpacity={0.8}
+          >
+            <Text className="text-white text-lg font-semibold text-center">
+              Create Account
+            </Text>
+          </TouchableOpacity>
+
+          {/* Login Link */}
+          <TouchableOpacity 
+            onPress={() => router.back()}
+            className="items-center mt-6"
+          >
+            <Text className="text-gray-600 text-base">
+              Already have an account?{" "}
+              <Text className="text-orange-600 font-semibold">Sign In</Text>
+            </Text>
+          </TouchableOpacity>
+
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   )
 }
 

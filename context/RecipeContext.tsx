@@ -406,15 +406,15 @@ export const useAdminRecipes = () => {
     isApproved: boolean, 
     makePublic: boolean = true
   ): Promise<void> => {
-    const { userProfile } = useAuth();
-    if (!userProfile) throw new Error('Admin not authenticated');
+    const auth = useAuth();
+    if (!auth.userProfile) throw new Error('Admin not authenticated');
 
     try {
       await recipeService.approveRecipe(
         recipeId, 
         isApproved, 
-        userProfile.uid, 
-        userProfile.displayName,
+        auth.userProfile.uid, 
+        auth.userProfile.displayName,
         makePublic
       );
       
@@ -427,14 +427,14 @@ export const useAdminRecipes = () => {
   };
 
   const deleteRecipeByAdmin = async (recipeId: string): Promise<void> => {
-    const { userProfile } = useAuth();
-    if (!userProfile) throw new Error('Admin not authenticated');
+    const auth = useAuth();
+    if (!auth.userProfile) throw new Error('Admin not authenticated');
 
     try {
       await recipeService.deleteRecipeByAdmin(
         recipeId, 
-        userProfile.uid, 
-        userProfile.displayName
+        auth.userProfile.uid, 
+        auth.userProfile.displayName
       );
       
       // Update local state

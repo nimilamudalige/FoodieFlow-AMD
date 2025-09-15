@@ -18,6 +18,13 @@ import { User, UserPreferences, DietaryRestriction, CookingStyle } from "@/types
 
 const USERS_COLLECTION = "users"
 
+// Helper to remove undefined fields from an object
+function removeUndefinedFields<T extends object>(obj: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([_, v]) => v !== undefined)
+  ) as Partial<T>
+}
+
 export const userService = {
   // Create new user profile
   createUser: async (userId: string, userData: Omit<User, 'id'>): Promise<User> => {
@@ -29,13 +36,15 @@ export const userService = {
         createdAt: new Date(),
         updatedAt: new Date()
       }
-      
-      await setDoc(userRef, {
+
+      // Remove undefined fields before writing to Firestore
+      const cleanUser = removeUndefinedFields({
         ...newUser,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       })
-      
+
+      await setDoc(userRef, cleanUser)
       return newUser
     } catch (error) {
       console.error('Error creating user:', error)
@@ -70,11 +79,13 @@ export const userService = {
   updateUser: async (userId: string, updates: Partial<User>): Promise<User> => {
     try {
       const userRef = doc(db, USERS_COLLECTION, userId)
-      
-      await updateDoc(userRef, {
+      // Remove undefined fields before updating
+      const cleanUpdates = removeUndefinedFields({
         ...updates,
         updatedAt: serverTimestamp()
       })
+
+      await updateDoc(userRef, cleanUpdates)
       
       // Get updated user data
       const updatedUser = await userService.getUser(userId)
@@ -93,7 +104,6 @@ export const userService = {
   updatePreferences: async (userId: string, preferences: UserPreferences): Promise<void> => {
     try {
       const userRef = doc(db, USERS_COLLECTION, userId)
-      
       await updateDoc(userRef, {
         preferences,
         updatedAt: serverTimestamp()
@@ -108,7 +118,6 @@ export const userService = {
   addToFavorites: async (userId: string, recipeId: string): Promise<void> => {
     try {
       const userRef = doc(db, USERS_COLLECTION, userId)
-      
       await updateDoc(userRef, {
         favoriteRecipes: arrayUnion(recipeId),
         updatedAt: serverTimestamp()
@@ -122,7 +131,6 @@ export const userService = {
   removeFromFavorites: async (userId: string, recipeId: string): Promise<void> => {
     try {
       const userRef = doc(db, USERS_COLLECTION, userId)
-      
       await updateDoc(userRef, {
         favoriteRecipes: arrayRemove(recipeId),
         updatedAt: serverTimestamp()
