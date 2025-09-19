@@ -107,6 +107,25 @@ const RecipeFormScreen = () => {
     setInstructions(newInstructions)
   }
 
+  // Image picker for web
+  const handlePickImage = async () => {
+    if (Platform.OS === "web") {
+      const input = document.createElement("input")
+      input.type = "file"
+      input.accept = "image/*"
+      input.onchange = async (event: any) => {
+        const file = event.target.files[0]
+        if (file) {
+          const url = URL.createObjectURL(file)
+          setImageUrl(url)
+        }
+      }
+      input.click()
+    } else {
+      Alert.alert("Image picker not implemented for mobile in this example.")
+    }
+  }
+
   // Form validation
   const validateForm = (): boolean => {
     if (!title.trim()) {
@@ -160,19 +179,22 @@ const RecipeFormScreen = () => {
       const validIngredients = ingredients.filter(ing => ing.name.trim() && ing.quantity.trim())
       const validInstructions = instructions.filter(inst => inst.trim())
 
-      const recipeData: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'> = {
+      // Remove undefined fields before saving
+      const recipeData: any = {
         title: title.trim(),
         description: description.trim(),
         category,
         difficulty,
         cookingTime: Number(cookingTime),
         servings: Number(servings),
-        imageUrl: imageUrl.trim() || undefined,
         ingredients: validIngredients,
         instructions: validInstructions,
         authorId: firebaseUser.uid,
         rating: 0,
         isFavorite: false
+      }
+      if (imageUrl && imageUrl.trim()) {
+        recipeData.imageUrl = imageUrl.trim()
       }
 
       if (isNew) {
@@ -240,23 +262,22 @@ const RecipeFormScreen = () => {
               />
             </View>
 
+            {/* Image Picker */}
             <View className="mb-4">
-              <Text className="text-sm font-medium text-gray-700 mb-2">Image URL (Optional)</Text>
-              <TextInput
-                className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base"
-                placeholder="https://example.com/image.jpg"
-                value={imageUrl}
-                onChangeText={setImageUrl}
-                keyboardType="url"
-                autoCapitalize="none"
-              />
-              {imageUrl && (
+              <Text className="text-sm font-medium text-gray-700 mb-2">Recipe Image</Text>
+              <TouchableOpacity
+                className="bg-orange-500 px-4 py-2 rounded-lg mb-2"
+                onPress={handlePickImage}
+              >
+                <Text className="text-white font-medium">Choose Image</Text>
+              </TouchableOpacity>
+              {imageUrl ? (
                 <Image
                   source={{ uri: imageUrl }}
                   className="w-full h-32 rounded-xl mt-2"
                   resizeMode="cover"
                 />
-              )}
+              ) : null}
             </View>
 
             <View className="flex-row mb-4">
