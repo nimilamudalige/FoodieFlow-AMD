@@ -10,24 +10,15 @@ import {
   where,
   orderBy,
   limit,
-  startAfter,
-  QueryDocumentSnapshot,
-  DocumentData,
-  serverTimestamp,
-  increment,
-  arrayUnion,
-  arrayRemove
+  serverTimestamp
 } from "firebase/firestore"
 import { Recipe, RecipeCategory, DifficultyLevel, RecipeFilter } from "@/types/recipe"
 import { db } from "@/firebase"
 
 // Collection reference
 export const recipeColRef = collection(db, "recipes")
-const RECIPES_PER_PAGE = 10
 
 export const recipeService = {
-  // ==================== CRUD Operations ====================
-  
   // Create new recipe
   createRecipe: async (recipe: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
     try {
@@ -35,8 +26,8 @@ export const recipeService = {
         ...recipe,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        rating: 0,
-        isFavorite: false
+        rating: recipe.rating || 0,
+        isFavorite: recipe.isFavorite || false
       }
       
       const docRef = await addDoc(recipeColRef, recipeData)
@@ -97,26 +88,10 @@ export const recipeService = {
     }
   },
 
-  // ==================== Query Operations ====================
-
-  // Get all recipes with pagination
-  getAllRecipes: async (lastDoc?: QueryDocumentSnapshot<DocumentData>): Promise<{
-    recipes: Recipe[]
-    lastDoc: QueryDocumentSnapshot<DocumentData> | null
-    hasMore: boolean
-  }> => {
+  // Get all recipes (simple query)
+  getAllRecipes: async (): Promise<Recipe[]> => {
     try {
-      let q = query(
-        recipeColRef,
-        orderBy('createdAt', 'desc'),
-        limit(RECIPES_PER_PAGE)
-      )
-
-      if (lastDoc) {
-        q = query(q, startAfter(lastDoc))
-      }
-
-      const snapshot = await getDocs(q)
+      const snapshot = await getDocs(recipeColRef)
       const recipes = snapshot.docs.map((doc) => {
         const data = doc.data()
         return {
@@ -126,27 +101,25 @@ export const recipeService = {
           updatedAt: data.updatedAt?.toDate() || new Date()
         } as Recipe
       })
-
-      const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null
-      const hasMore = snapshot.docs.length === RECIPES_PER_PAGE
-
-      return { recipes, lastDoc: lastVisible, hasMore }
+      
+      // Sort on client side to avoid index requirements
+      return recipes.sort((a, b) => {
+        const dateA = a.createdAt?.getTime() || 0
+        const dateB = b.createdAt?.getTime() || 0
+        return dateB - dateA
+      })
     } catch (error) {
       console.error('Error getting all recipes:', error)
       throw new Error('Failed to get recipes')
     }
   },
 
-  // Get recipes by user ID
+  // Get recipes by user ID (simple query)
   getRecipesByUserId: async (userId: string): Promise<Recipe[]> => {
     try {
-      const q = query(
-        recipeColRef, 
-        where("authorId", "==", userId),
-        orderBy('createdAt', 'desc')
-      )
-      
+      const q = query(recipeColRef, where("authorId", "==", userId))
       const querySnapshot = await getDocs(q)
+      
       const recipes = querySnapshot.docs.map((doc) => {
         const data = doc.data()
         return {
@@ -157,23 +130,24 @@ export const recipeService = {
         } as Recipe
       })
       
-      return recipes
+      // Sort on client side
+      return recipes.sort((a, b) => {
+        const dateA = a.createdAt?.getTime() || 0
+        const dateB = b.createdAt?.getTime() || 0
+        return dateB - dateA
+      })
     } catch (error) {
       console.error('Error getting user recipes:', error)
       throw new Error('Failed to get user recipes')
     }
   },
 
-  // Get recipes by category
+  // Get recipes by category (simple query)
   getRecipesByCategory: async (category: RecipeCategory): Promise<Recipe[]> => {
     try {
-      const q = query(
-        recipeColRef,
-        where("category", "==", category),
-        orderBy('createdAt', 'desc')
-      )
-      
+      const q = query(recipeColRef, where("category", "==", category))
       const querySnapshot = await getDocs(q)
+      
       const recipes = querySnapshot.docs.map((doc) => {
         const data = doc.data()
         return {
@@ -184,46 +158,37 @@ export const recipeService = {
         } as Recipe
       })
       
-      return recipes
+      // Sort on client side
+      return recipes.sort((a, b) => {
+        const dateA = a.createdAt?.getTime() || 0
+        const dateB = b.createdAt?.getTime() || 0
+        return dateB - dateA
+      })
     } catch (error) {
       console.error('Error getting recipes by category:', error)
       throw new Error('Failed to get recipes by category')
     }
   },
 
-  // Search and filter recipes
+  // Simple search (client-side filtering)
   searchRecipes: async (filters: RecipeFilter): Promise<Recipe[]> => {
     try {
-      let q = query(recipeColRef)
+      // Get all recipes first
+      let recipes = await recipeService.getAllRecipes()
 
-      // Add filters
+      // Apply filters on client side
       if (filters.category) {
-        q = query(q, where("category", "==", filters.category))
+        recipes = recipes.filter(recipe => recipe.category === filters.category)
       }
 
       if (filters.difficulty) {
-        q = query(q, where("difficulty", "==", filters.difficulty))
+        recipes = recipes.filter(recipe => recipe.difficulty === filters.difficulty)
       }
 
       if (filters.maxCookingTime) {
-        q = query(q, where("cookingTime", "<=", filters.maxCookingTime))
+        recipes = recipes.filter(recipe => recipe.cookingTime <= filters.maxCookingTime!)
       }
 
-      // Add ordering
-      q = query(q, orderBy('createdAt', 'desc'))
-
-      const querySnapshot = await getDocs(q)
-      let recipes = querySnapshot.docs.map((doc) => {
-        const data = doc.data()
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date()
-        } as Recipe
-      })
-
-      // Client-side filtering for search term and favorites
       if (filters.searchTerm) {
         const searchLower = filters.searchTerm.toLowerCase()
         recipes = recipes.filter(recipe => 
@@ -245,8 +210,6 @@ export const recipeService = {
       throw new Error('Failed to search recipes')
     }
   },
-
-  // ==================== Rating & Favorites ====================
 
   // Update recipe rating
   updateRating: async (recipeId: string, newRating: number): Promise<void> => {
@@ -276,100 +239,53 @@ export const recipeService = {
     }
   },
 
-  // Get favorite recipes
-  getFavoriteRecipes: async (userId: string): Promise<Recipe[]> => {
+  // Get recent recipes (client-side sorting)
+  getRecentRecipes: async (limitCount: number = 10): Promise<Recipe[]> => {
     try {
-      const q = query(
-        recipeColRef,
-        where("authorId", "==", userId),
-        where("isFavorite", "==", true),
-        orderBy('updatedAt', 'desc')
-      )
-      
-      const querySnapshot = await getDocs(q)
-      const recipes = querySnapshot.docs.map((doc) => {
-        const data = doc.data()
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date()
-        } as Recipe
-      })
-      
-      return recipes
+      const allRecipes = await recipeService.getAllRecipes()
+      return allRecipes.slice(0, limitCount)
     } catch (error) {
-      console.error('Error getting favorite recipes:', error)
-      throw new Error('Failed to get favorite recipes')
+      console.error('Error getting recent recipes:', error)
+      return []
     }
   },
 
-  // ==================== Statistics ====================
-
-  // Get recipe count by user
-  getRecipeCountByUser: async (userId: string): Promise<number> => {
-    try {
-      const q = query(recipeColRef, where("authorId", "==", userId))
-      const snapshot = await getDocs(q)
-      return snapshot.size
-    } catch (error) {
-      console.error('Error getting recipe count:', error)
-      return 0
-    }
-  },
-
-  // Get popular recipes (high rated)
+  // Get popular recipes (client-side filtering)
   getPopularRecipes: async (limitCount: number = 10): Promise<Recipe[]> => {
     try {
-      const q = query(
-        recipeColRef,
-        where("rating", ">=", 4),
-        orderBy('rating', 'desc'),
-        orderBy('createdAt', 'desc'),
-        limit(limitCount)
-      )
+      const allRecipes = await recipeService.getAllRecipes()
       
-      const querySnapshot = await getDocs(q)
-      const recipes = querySnapshot.docs.map((doc) => {
-        const data = doc.data()
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date()
-        } as Recipe
-      })
+      // Filter and sort by rating on client side
+      const popularRecipes = allRecipes
+        .filter(recipe => recipe.rating && recipe.rating >= 3)
+        .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+        .slice(0, limitCount)
       
-      return recipes
+      return popularRecipes
     } catch (error) {
       console.error('Error getting popular recipes:', error)
       return []
     }
   },
 
-  // Get recent recipes
-  getRecentRecipes: async (limitCount: number = 10): Promise<Recipe[]> => {
+  // Get recipe count by user
+  getRecipeCountByUser: async (userId: string): Promise<number> => {
     try {
-      const q = query(
-        recipeColRef,
-        orderBy('createdAt', 'desc'),
-        limit(limitCount)
-      )
-      
-      const querySnapshot = await getDocs(q)
-      const recipes = querySnapshot.docs.map((doc) => {
-        const data = doc.data()
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date()
-        } as Recipe
-      })
-      
-      return recipes
+      const recipes = await recipeService.getRecipesByUserId(userId)
+      return recipes.length
     } catch (error) {
-      console.error('Error getting recent recipes:', error)
+      console.error('Error getting recipe count:', error)
+      return 0
+    }
+  },
+
+  // Get favorite recipes
+  getFavoriteRecipes: async (userId: string): Promise<Recipe[]> => {
+    try {
+      const userRecipes = await recipeService.getRecipesByUserId(userId)
+      return userRecipes.filter(recipe => recipe.isFavorite)
+    } catch (error) {
+      console.error('Error getting favorite recipes:', error)
       return []
     }
   }

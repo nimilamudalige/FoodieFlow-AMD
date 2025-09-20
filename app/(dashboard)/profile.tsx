@@ -52,7 +52,7 @@ const ProfileScreen = () => {
       title: "My Recipes",
       subtitle: `${userStats.totalRecipes} recipe${userStats.totalRecipes !== 1 ? 's' : ''}`,
       icon: "restaurant-outline",
-      onPress: () => router.push("/(dashboard)/recipes")
+      onPress: () => router.push("/(dashboard)/recipies")
     },
     {
       title: "Favorite Recipes", 
@@ -70,7 +70,7 @@ const ProfileScreen = () => {
       title: "Settings",
       subtitle: "App settings and preferences",
       icon: "settings-outline",
-      onPress: () => router.push("/(dashboard)/settings")
+      onPress: () => router.push("/(dashboard)/setting")
     }
   ]
 
@@ -100,7 +100,7 @@ const ProfileScreen = () => {
   }
 
   const handleEditProfile = () => {
-    router.push("/(dashboard)/edit-profile")
+    router.push("/(dashboard)/profile")
   }
 
   const formatAccountAge = (days: number) => {
@@ -222,7 +222,7 @@ const ProfileScreen = () => {
         <Text className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</Text>
         
         <TouchableOpacity
-          onPress={() => router.push("/(dashboard)/recipes/new")}
+          onPress={() => router.push("/(dashboard)/recipies/new")}
           className="bg-orange-500 rounded-xl p-4 mb-3 flex-row items-center justify-center"
         >
           <Ionicons name="add-circle-outline" size={24} color="white" />
