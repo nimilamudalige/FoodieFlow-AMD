@@ -8,8 +8,6 @@ import {
   query,
   updateDoc,
   where,
-  orderBy,
-  limit,
   serverTimestamp
 } from "firebase/firestore"
 import { Recipe, RecipeCategory, DifficultyLevel, RecipeFilter } from "@/types/recipe"
