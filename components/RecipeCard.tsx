@@ -363,9 +363,11 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
           text: "Delete", 
           style: "destructive",
           onPress: () => onDelete?.(recipe.id!)
+          
         }
       ]
     )
+    
   }
 
   const handleFavoriteToggle = () => {
