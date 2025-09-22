@@ -72,7 +72,8 @@ Planned features:
 
 ---
 
-### Demo Vedio
-[Youtube link](https://youtu.be/3tEd4intbyI)
+## 🎥 Demo Video
+
+Watch the full app demo on **YouTube** 👉 [FoodieFlow Recipe App Demo](https://youtu.be/3tEd4intbyI)
 
 
