@@ -72,7 +72,7 @@ const Register = () => {
             </View>
             
             <Text className="text-3xl font-bold text-gray-900 mb-2">
-              Join Recipe App
+              Join FoodieFlow!
             </Text>
             <Text className="text-base text-gray-600 text-center">
               Create your account and start your culinary journey

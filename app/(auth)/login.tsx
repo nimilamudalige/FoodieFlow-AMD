@@ -128,7 +128,7 @@ const Login = () => {
             </View>
             
             <Text className="text-3xl font-bold text-gray-900 mb-2">
-              Welcome Back!
+              Welcome Back FoodieFlow!
             </Text>
             <Text className="text-lg text-gray-600 text-center">
               Sign in to continue cooking amazing recipes

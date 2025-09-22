@@ -1,21 +1,21 @@
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  TouchableOpacity,
   ScrollView,
   Alert
-} from "react-native"
-import React from "react"
-import { useRouter } from "expo-router"
-import { Ionicons } from "@expo/vector-icons"
-import { useAuth } from "@/context/AuthContext"
-import { authService } from "@/services/authService"
-import { useLoader, LOADING_MESSAGES } from "@/context/LoaderContext"
+} from "react-native";
+import React from "react";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "@/context/AuthContext";
+import { authService } from "@/services/authService";
+import { useLoader, LOADING_MESSAGES } from "@/context/LoaderContext";
 
 const SettingScreen = () => {
-  const router = useRouter()
-  const { user } = useAuth()
-  const { showLoader, hideLoader } = useLoader()
+  const router = useRouter();
+  const { user } = useAuth();
+  const { showLoader, hideLoader } = useLoader();
 
   const settingItems = [
     {
@@ -26,7 +26,7 @@ const SettingScreen = () => {
     },
     {
       title: "Change Password",
-      subtitle: "Update your account password", 
+      subtitle: "Update your account password",
       icon: "key-outline",
       onPress: () => router.push("/(dashboard)/change-password")
     },
@@ -43,7 +43,7 @@ const SettingScreen = () => {
       onPress: () => handleSignOut(),
       isDestructive: true
     }
-  ]
+  ];
 
   const handleSignOut = () => {
     Alert.alert(
@@ -51,24 +51,25 @@ const SettingScreen = () => {
       "Are you sure you want to sign out?",
       [
         { text: "Cancel", style: "cancel" },
-        { 
-          text: "Sign Out", 
+        {
+          text: "Sign Out",
           style: "destructive",
           onPress: async () => {
             try {
-              showLoader(LOADING_MESSAGES.SIGNING_OUT)
-              await authService.logout()
-              router.replace("/(auth)/login")
+              showLoader(LOADING_MESSAGES.SIGNING_OUT);
+              await authService.logout(); // Ensure this function works correctly
+              router.replace("/(auth)/login");
             } catch (error) {
-              Alert.alert("Error", "Failed to sign out")
+              console.error("Sign Out Error:", error);
+              Alert.alert("Error", "Failed to sign out. Please try again.");
             } finally {
-              hideLoader()
+              hideLoader();
             }
           }
         }
       ]
-    )
-  }
+    );
+  };
 
   return (
     <ScrollView className="flex-1 bg-gray-50">
@@ -96,10 +97,10 @@ const SettingScreen = () => {
                   w-10 h-10 rounded-lg items-center justify-center mr-3
                   ${item.isDestructive ? 'bg-red-100' : 'bg-gray-100'}
                 `}>
-                  <Ionicons 
-                    name={item.icon as any} 
-                    size={20} 
-                    color={item.isDestructive ? "#EF4444" : "#6B7280"} 
+                  <Ionicons
+                    name={item.icon as any}
+                    size={20}
+                    color={item.isDestructive ? "#EF4444" : "#6B7280"}
                   />
                 </View>
                 <View className="flex-1">
@@ -114,14 +115,14 @@ const SettingScreen = () => {
                   </Text>
                 </View>
               </View>
-              
+
               <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
             </TouchableOpacity>
           ))}
         </View>
       </View>
     </ScrollView>
-  )
-}
+  );
+};
 
-export default SettingScreen
+export default SettingScreen;

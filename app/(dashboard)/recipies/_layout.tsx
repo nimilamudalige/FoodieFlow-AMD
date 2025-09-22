@@ -40,7 +40,7 @@ const DashboardLayout = () => {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: "#FF6B35", // Orange theme for Recipe App
+          tabBarActiveTintColor: "#FF6B35", 
           tabBarInactiveTintColor: "#6B7280",
           tabBarStyle: {
             backgroundColor: "#FFFFFF",

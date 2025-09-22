@@ -353,7 +353,13 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
     return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`
   }
 
-  const handleDelete = () => {
+  
+  const handleDeleteRecipe = () => {
+    if (!recipe.id) {
+      Alert.alert("Error", "Recipe ID not found")
+      return
+    }
+
     Alert.alert(
       "Delete Recipe",
       `Are you sure you want to delete "${recipe.title}"?`,
@@ -362,13 +368,19 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
         { 
           text: "Delete", 
           style: "destructive",
-          onPress: () => onDelete?.(recipe.id!)
-          
+          onPress: () => {
+            try {
+              onDelete?.(recipe.id!)
+            } catch (error: any) {
+              const message = error?.message || JSON.stringify(error) || "Failed to delete recipe"
+              Alert.alert("Error", message)
+            }
+          }
         }
       ]
     )
-    
   }
+
 
   const handleFavoriteToggle = () => {
     onToggleFavorite?.(recipe.id!, !recipe.isFavorite)
@@ -571,7 +583,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={handleDelete}
+              onPress={handleDeleteRecipe}
               className="flex-row items-center px-3 py-1 bg-red-50 rounded-lg"
             >
               <Ionicons name="trash-outline" size={14} color="#EF4444" />

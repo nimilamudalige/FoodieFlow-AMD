@@ -118,7 +118,7 @@ const RecipeDetailScreen = () => {
   return (
     <View className="flex-1 bg-white">
       {/* 🔶 Compact Orange Header */}
-      <View className="bg-orange-500 pt-10 pb-4 px-4">
+      <View className="bg-orange-500 pt-10 pb-4 px-4 h-25">
         <View className="flex-row items-center justify-between mb-2">
           <TouchableOpacity
             onPress={() => router.back()}
