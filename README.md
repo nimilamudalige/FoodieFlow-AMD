@@ -42,34 +42,35 @@ The Recipe App allows users to:
 
 ## 📂 Project Structure
 app/
-├─ (auth)/ # Authentication screens
-│ ├─ _layout.tsx
-│ ├─ login.tsx
-│ └─ register.tsx
-├─ (dashboard)/ # Main app screens
-│ ├─ _layout.tsx # Tab navigation
-│ ├─ home.tsx # Recipe feed/discovery
-│ ├─ profile.tsx # User profile
-│ ├─ setting.tsx # App settings
-│ └─ recipes/ # Recipe management
-│ ├─ _layout.tsx # Stack navigation
-│ ├─ index.tsx # Recipe list
-│ ├─ [id].tsx # Add/Edit form
-│ └─ view/[id].tsx# Recipe detail
+├─ (auth)/                 # Authentication screens
+│  ├─ _layout.tsx
+│  ├─ login.tsx
+│  └─ register.tsx
+├─ (dashboard)/            # Main app screens
+│  ├─ _layout.tsx          # Tab navigation
+│  ├─ home.tsx             # Recipe feed/discovery
+│  ├─ profile.tsx          # User profile
+│  ├─ setting.tsx          # App settings
+│  └─ recipes/             # Recipe management
+│      ├─ _layout.tsx      # Stack navigation
+│      ├─ index.tsx        # Recipe list
+│      ├─ [id].tsx         # Add/Edit form
+│      └─ view/[id].tsx    # Recipe detail
 components/
-├─ RecipeCard.tsx # Recipe display component
-└─ Loader.tsx # Loading indicator
+├─ RecipeCard.tsx          # Recipe display component
+└─ Loader.tsx              # Loading indicator
 context/
-├─ AuthContext.tsx # Auth state management
-├─ LoaderContext.tsx # Global loading state
-└─ RecipeContext.tsx # Recipe CRUD state
+├─ AuthContext.tsx         # Auth state management
+├─ LoaderContext.tsx       # Global loading state
+└─ RecipeContext.tsx       # Recipe CRUD state
 services/
-├─ authService.ts # Authentication methods
-├─ recipeService.ts # Firestore CRUD methods
-└─ userService.ts # User profile management
+├─ authService.ts          # Authentication methods
+├─ recipeService.ts        # Firestore CRUD methods
+└─ userService.ts          # User profile management
 types/
-├─ recipe.ts # Recipe type definitions
-└─ user.ts # User type definitions
+├─ recipe.ts               # Recipe type definitions
+└─ user.ts                 # User type definitions
+
 
 
 
