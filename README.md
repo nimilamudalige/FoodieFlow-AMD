@@ -70,3 +70,46 @@ services/
 types/
 ├─ recipe.ts # Recipe type definitions
 └─ user.ts # User type definitions
+
+
+
+# 🧭 App Navigation
+
+### Authentication Flow
+Login → Register → Auto-redirect if authenticated
+
+### Dashboard Tabs
+- **Home**: Recipe discovery & search  
+- **Recipes**: Manage personal recipes  
+- **Profile**: User info & stats  
+- **Settings**: App preferences  
+
+### Recipe Flow
+View → Edit/Delete → Auto-refresh list
+
+---
+
+## 🔮 Future Enhancements
+
+Planned features:
+- 📤 Social sharing capabilities  
+- 🛒 Grocery list & meal planner  
+- 🔔 Push notifications  
+- ⚡ Offline synchronization & caching  
+- 🎯 Advanced search filters & recommendations  
+
+---
+
+## 🧪 Testing
+
+- **Manual Testing**: Authentication, CRUD operations, navigation, and validation  
+- **Device Testing**: iOS/Android, various screen sizes, and network conditions  
+
+---
+
+## 📦 Build & Deployment
+
+### Development Builds
+```bash
+npx expo build:android
+npx expo build:ios
