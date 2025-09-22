@@ -4,15 +4,18 @@ A modern cross-platform **React Native Expo** mobile application for creating, m
 Built as the **ITS 2127 Advanced Mobile Developer** final project, this app demonstrates full-stack mobile development with authentication, CRUD operations, and real-time data synchronization using **Firebase**.
 
 ---
+## 📋 Project Overview
 
-## 📋 Overview
-The Recipe App allows users to:
-- Create and manage personal recipes
-- Explore and search for recipes by category or ingredients
-- Save favorites and rate recipes
-- Enjoy real-time updates and a smooth, responsive experience
+**FoodieFlow** is a cross-platform **recipe management mobile app** built with **React Native Expo**.  
+It allows users to **create, manage, and explore recipes** with a clean and intuitive interface.  
+Designed as a comprehensive recipe companion, FoodieFlow integrates **Firebase Authentication** and **Cloud Firestore** to deliver **real-time updates**, smooth navigation, and a modern cooking experience.
 
----
+FoodieFlow is built to showcase **advanced mobile development skills**, including:
+- Type-safe development with **TypeScript**
+- **Context API** for state management
+- Professional loading states, error handling, and form validation
+
+This app serves as a **modern culinary companion**, helping food lovers discover, organize, and share their favorite recipes anytime, anywhere.
 
 ## ✨ Features
 
@@ -39,40 +42,6 @@ The Recipe App allows users to:
 | **State**    | React Context API + custom hooks |
 
 ---
-
-## 📂 Project Structure
-app/
-├─ (auth)/                 # Authentication screens
-│  ├─ _layout.tsx
-│  ├─ login.tsx
-│  └─ register.tsx
-├─ (dashboard)/            # Main app screens
-│  ├─ _layout.tsx          # Tab navigation
-│  ├─ home.tsx             # Recipe feed/discovery
-│  ├─ profile.tsx          # User profile
-│  ├─ setting.tsx          # App settings
-│  └─ recipes/             # Recipe management
-│      ├─ _layout.tsx      # Stack navigation
-│      ├─ index.tsx        # Recipe list
-│      ├─ [id].tsx         # Add/Edit form
-│      └─ view/[id].tsx    # Recipe detail
-components/
-├─ RecipeCard.tsx          # Recipe display component
-└─ Loader.tsx              # Loading indicator
-context/
-├─ AuthContext.tsx         # Auth state management
-├─ LoaderContext.tsx       # Global loading state
-└─ RecipeContext.tsx       # Recipe CRUD state
-services/
-├─ authService.ts          # Authentication methods
-├─ recipeService.ts        # Firestore CRUD methods
-└─ userService.ts          # User profile management
-types/
-├─ recipe.ts               # Recipe type definitions
-└─ user.ts                 # User type definitions
-
-
-
 
 # 🧭 App Navigation
 
@@ -114,3 +83,6 @@ Planned features:
 ```bash
 npx expo build:android
 npx expo build:ios
+
+##Demo vedio link
+
