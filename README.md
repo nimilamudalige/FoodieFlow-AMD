@@ -72,12 +72,7 @@ Planned features:
 
 ---
 
-## 📦 Build & Deployment
+### Demo Vedio
+[Youtube link](https://youtu.be/3tEd4intbyI)
 
-### Development Builds
-```bash
-npx expo build:android
-npx expo build:ios
-
-##Demo vedio link
 
