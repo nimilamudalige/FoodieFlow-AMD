@@ -1,9 +1,4 @@
 # 🍳 FoodieFlow (Recipe App)
-
-A modern cross-platform **React Native Expo** mobile application for creating, managing, and discovering recipes.  
-Built as the **ITS 2127 Advanced Mobile Developer** final project, this app demonstrates full-stack mobile development with authentication, CRUD operations, and real-time data synchronization using **Firebase**.
-
----
 ## 📋 Project Overview
 
 **FoodieFlow** is a cross-platform **recipe management mobile app** built with **React Native Expo**.  
