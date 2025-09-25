@@ -102,7 +102,6 @@ const Login = () => {
 
   const updateFormData = (field: keyof LoginCredentials, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }))
     }

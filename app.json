@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "amd-day-01",
-    "slug": "amd-day-01",
+    "slug": "foodieflow",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -16,7 +16,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.pasankm.foodieflow"
     },
     "web": {
       "bundler": "metro",
@@ -37,6 +38,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f4a210c5-156f-43f6-b960-0a7656177aa1"
+      }
+    },
+    "owner": "pasankm"
   }
 }

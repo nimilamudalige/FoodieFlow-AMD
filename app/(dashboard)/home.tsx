@@ -1,3 +1,4 @@
+
 import { 
   View, 
   Text, 
@@ -6,7 +7,9 @@ import {
   FlatList,
   RefreshControl,
   Image,
-  Dimensions
+  Dimensions,
+  Alert,
+  TextInput
 } from "react-native"
 import React, { useState, useEffect, useCallback } from "react"
 import { useRouter } from "expo-router"
@@ -16,7 +19,6 @@ import { recipeService } from "@/services/recipeService"
 import { Recipe, RecipeCategory } from "@/types/recipe"
 import RecipeCard from "@/components/RecipeCard"
 import { useLoader } from "@/context/LoaderContext"
-
 
 const { width } = Dimensions.get('window')
 
@@ -28,33 +30,40 @@ const HomeScreen = () => {
   const [recentRecipes, setRecentRecipes] = useState<Recipe[]>([])
   const [popularRecipes, setPopularRecipes] = useState<Recipe[]>([])
   const [userRecipes, setUserRecipes] = useState<Recipe[]>([])
+  const [allRecentRecipes, setAllRecentRecipes] = useState<Recipe[]>([])
+  const [allPopularRecipes, setAllPopularRecipes] = useState<Recipe[]>([])
+  const [allUserRecipes, setAllUserRecipes] = useState<Recipe[]>([])
   const [refreshing, setRefreshing] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState<RecipeCategory | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<RecipeCategory | null>(null)
+  const [showMyRecipesOnly, setShowMyRecipesOnly] = useState(false)
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showSearchBar, setShowSearchBar] = useState(false)
 
   const quickActions = [
     {
       title: "Add Recipe",
       icon: "add-circle-outline" as keyof typeof Ionicons.glyphMap,
       color: "#FF6B35",
-      route: "/(dashboard)/recipes/new"
+      route: "/(dashboard)/recipies/new"
     },
     {
       title: "My Recipes",
       icon: "restaurant-outline" as keyof typeof Ionicons.glyphMap,
       color: "#8B5CF6",
-      route: "/(dashboard)/recipes"
+      action: "myRecipes"
     },
     {
       title: "Favorites",
       icon: "heart-outline" as keyof typeof Ionicons.glyphMap,
       color: "#EF4444",
-      route: "/(dashboard)/favorites"
+      action: "favorites"
     },
     {
       title: "Search",
       icon: "search-outline" as keyof typeof Ionicons.glyphMap,
       color: "#3B82F6",
-      route: "/(dashboard)/search"
+      action: "search"
     }
   ]
 
@@ -75,8 +84,15 @@ const HomeScreen = () => {
       ])
       
       setRecentRecipes(recent)
+      setAllRecentRecipes(recent)
+      
       setPopularRecipes(popular)
-      setUserRecipes(userRecs.slice(0, 4)) // Show only first 4
+      setAllPopularRecipes(popular)
+      
+      const limitedUserRecipes = userRecs.slice(0, 4)
+      setUserRecipes(limitedUserRecipes)
+      setAllUserRecipes(limitedUserRecipes)
+      
     } catch (error) {
       console.error('Error loading home data:', error)
     }
@@ -89,6 +105,11 @@ const HomeScreen = () => {
   // Handle refresh
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
+    setSelectedCategory(null)
+    setShowMyRecipesOnly(false)
+    setShowFavoritesOnly(false)
+    setSearchQuery('')
+    setShowSearchBar(false)
     await loadData()
     setRefreshing(false)
   }, [loadData])
@@ -104,89 +125,171 @@ const HomeScreen = () => {
   }
 
   const handleDeleteRecipe = async (recipeId: string) => {
-  const recipe = recentRecipes.find(r => r.id === recipeId) ||
-                 popularRecipes.find(r => r.id === recipeId) ||
-                 userRecipes.find(r => r.id === recipeId);
+    const recipe = allRecentRecipes.find(r => r.id === recipeId) ||
+                   allPopularRecipes.find(r => r.id === recipeId) ||
+                   allUserRecipes.find(r => r.id === recipeId);
 
-  if (!recipe) return;
+    if (!recipe) return;
 
-  Alert.alert(
-    "Delete Recipe",
-    `Are you sure you want to delete "${recipe.title}"? This action cannot be undone.`,
-    [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            showLoader("Deleting recipe...");
-            await recipeService.deleteRecipe(recipeId);
+    Alert.alert(
+      "Delete Recipe",
+      `Are you sure you want to delete "${recipe.title}"? This action cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              showLoader("Deleting recipe...");
+              await recipeService.deleteRecipe(recipeId);
 
-            setRecentRecipes(prev => prev.filter(r => r.id !== recipeId));
-            setPopularRecipes(prev => prev.filter(r => r.id !== recipeId));
-            setUserRecipes(prev => prev.filter(r => r.id !== recipeId));
+              setRecentRecipes(prev => prev.filter(r => r.id !== recipeId));
+              setAllRecentRecipes(prev => prev.filter(r => r.id !== recipeId));
+              setPopularRecipes(prev => prev.filter(r => r.id !== recipeId));
+              setAllPopularRecipes(prev => prev.filter(r => r.id !== recipeId));
+              setUserRecipes(prev => prev.filter(r => r.id !== recipeId));
+              setAllUserRecipes(prev => prev.filter(r => r.id !== recipeId));
 
-            Alert.alert("Success", "Recipe deleted successfully");
-          } catch (error: any) {
-            const message = error?.message || JSON.stringify(error) || "Failed to delete recipe";
-            Alert.alert("Error", message);
-          } finally {
-            hideLoader();
+              Alert.alert("Success", "Recipe deleted successfully");
+            } catch (error: any) {
+              const message = error?.message || JSON.stringify(error) || "Failed to delete recipe";
+              Alert.alert("Error", message);
+            } finally {
+              hideLoader();
+            }
           }
         }
-      }
-    ]
-  );
-};
+      ]
+    );
+  };
 
   // Handle toggle favorite
   const handleToggleFavorite = async (recipeId: string, isFavorite: boolean) => {
     try {
       await recipeService.toggleFavorite(recipeId, isFavorite)
       // Update local state
-      setRecentRecipes(prev => prev.map(r => 
-        r.id === recipeId ? { ...r, isFavorite } : r
-      ))
-      setPopularRecipes(prev => prev.map(r => 
-        r.id === recipeId ? { ...r, isFavorite } : r
-      ))
-      setUserRecipes(prev => prev.map(r => 
-        r.id === recipeId ? { ...r, isFavorite } : r
-      ))
+      const updateRecipes = (recipes: Recipe[]) => 
+        recipes.map(r => r.id === recipeId ? { ...r, isFavorite } : r)
+      
+      setRecentRecipes(updateRecipes)
+      setAllRecentRecipes(updateRecipes)
+      setPopularRecipes(updateRecipes)
+      setAllPopularRecipes(updateRecipes)
+      setUserRecipes(updateRecipes)
+      setAllUserRecipes(updateRecipes)
     } catch (error: any) {
       Alert.alert("Error", error.message || "Failed to update favorite")
     }
   }
-// Handle category press
-const handleCategoryPress = (category: RecipeCategory) => {
-  if (category === selectedCategory) {
-    // Reset filter if the same category is clicked again
-    setSelectedCategory(null);
-    loadData(); // Reload all recipes
-  } else {
-    // Filter recipes by the selected category
-    setSelectedCategory(category);
-    setRecentRecipes(recentRecipes.filter(recipe => recipe.category === category));
-    setPopularRecipes(popularRecipes.filter(recipe => recipe.category === category));
-    setUserRecipes(userRecipes.filter(recipe => recipe.category === category));
-  }
-};
 
-// Handle search
-const handleSearch = (query: string) => {
-  const lowerCaseQuery = query.toLowerCase();
+  // Handle category press
+  const handleCategoryPress = (category: RecipeCategory) => {
+    if (category === selectedCategory) {
+      setSelectedCategory(null);
+      applyFilters();
+    } else {
+      setSelectedCategory(category);
+      applyFilters(category, showMyRecipesOnly, showFavoritesOnly, searchQuery);
+    }
+  };
 
-  // Filter recipes based on the search query
-  const filterRecipes = (recipes: Recipe[]) =>
-    recipes.filter(recipe =>
-      recipe.title.toLowerCase().includes(lowerCaseQuery)
-    );
+  // Handle My Recipes action
+  const handleMyRecipesPress = () => {
+    setShowMyRecipesOnly(!showMyRecipesOnly);
+    setShowFavoritesOnly(false); // Reset favorites when showing my recipes
+    applyFilters(selectedCategory, !showMyRecipesOnly, false, searchQuery);
+  };
 
-  setRecentRecipes(filterRecipes(recentRecipes));
-  setPopularRecipes(filterRecipes(popularRecipes));
-  setUserRecipes(filterRecipes(userRecipes));
-};
+  // Handle Favorites action
+  const handleFavoritesPress = () => {
+    setShowFavoritesOnly(!showFavoritesOnly);
+    setShowMyRecipesOnly(false); // Reset my recipes when showing favorites
+    applyFilters(selectedCategory, false, !showFavoritesOnly, searchQuery);
+  };
+
+  // Handle Search action
+  const handleSearchPress = () => {
+    setShowSearchBar(!showSearchBar);
+    if (!showSearchBar) {
+      setSearchQuery('');
+      applyFilters(selectedCategory, showMyRecipesOnly, showFavoritesOnly, '');
+    }
+  };
+
+  // Apply all filters
+  const applyFilters = (
+    category?: RecipeCategory | null, 
+    myRecipesOnly?: boolean, 
+    favoritesOnly?: boolean,
+    query?: string
+  ) => {
+    const currentCategory = category !== undefined ? category : selectedCategory;
+    const currentMyRecipesOnly = myRecipesOnly !== undefined ? myRecipesOnly : showMyRecipesOnly;
+    const currentFavoritesOnly = favoritesOnly !== undefined ? favoritesOnly : showFavoritesOnly;
+    const currentQuery = query !== undefined ? query : searchQuery;
+
+    let filteredRecent = [...allRecentRecipes];
+    let filteredPopular = [...allPopularRecipes];
+    let filteredUser = [...allUserRecipes];
+
+    // Apply category filter
+    if (currentCategory) {
+      filteredRecent = filteredRecent.filter(recipe => recipe.category === currentCategory);
+      filteredPopular = filteredPopular.filter(recipe => recipe.category === currentCategory);
+      filteredUser = filteredUser.filter(recipe => recipe.category === currentCategory);
+    }
+
+    // Apply search filter
+    if (currentQuery.trim()) {
+      const lowerCaseQuery = currentQuery.toLowerCase();
+      const searchFilter = (recipe: Recipe) =>
+        recipe.title.toLowerCase().includes(lowerCaseQuery) ||
+        (recipe.description && recipe.description.toLowerCase().includes(lowerCaseQuery));
+
+      filteredRecent = filteredRecent.filter(searchFilter);
+      filteredPopular = filteredPopular.filter(searchFilter);
+      filteredUser = filteredUser.filter(searchFilter);
+    }
+
+    // Apply Favorites filter
+    if (currentFavoritesOnly) {
+      filteredRecent = filteredRecent.filter(recipe => recipe.isFavorite);
+      filteredPopular = filteredPopular.filter(recipe => recipe.isFavorite);
+      filteredUser = filteredUser.filter(recipe => recipe.isFavorite);
+    }
+
+    // Apply My Recipes filter
+    if (currentMyRecipesOnly) {
+      filteredRecent = [];
+      filteredPopular = [];
+      // Keep only user recipes
+    } else {
+    }
+
+    setRecentRecipes(filteredRecent);
+    setPopularRecipes(filteredPopular);
+    setUserRecipes(filteredUser);
+  };
+
+  // Handle search input change
+  const handleSearchChange = (text: string) => {
+    setSearchQuery(text);
+    applyFilters(selectedCategory, showMyRecipesOnly, showFavoritesOnly, text);
+  };
+
+  // Handle quick action press
+  const handleQuickActionPress = (action: any) => {
+    if (action.route) {
+      router.push(action.route as any);
+    } else if (action.action === 'myRecipes') {
+      handleMyRecipesPress();
+    } else if (action.action === 'favorites') {
+      handleFavoritesPress();
+    } else if (action.action === 'search') {
+      handleSearchPress();
+    }
+  };
 
   // Render header
   const renderHeader = () => (
@@ -214,12 +317,73 @@ const handleSearch = (query: string) => {
         </TouchableOpacity>
       </View>
 
+      {/* Search Bar */}
+      {showSearchBar && (
+        <View className="mb-4">
+          <View className="flex-row items-center bg-gray-100 rounded-lg px-4 py-3">
+            <Ionicons name="search" size={20} color="#666" />
+            <TextInput
+              className="flex-1 ml-3 text-gray-700"
+              placeholder="Search recipes..."
+              value={searchQuery}
+              onChangeText={handleSearchChange}
+              autoFocus={true}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => handleSearchChange('')}>
+                <Ionicons name="close-circle" size={20} color="#666" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      )}
+
+      {/* Status indicators */}
+      {(showMyRecipesOnly || showFavoritesOnly || selectedCategory || searchQuery) && (
+        <View className="flex-row flex-wrap mb-4 gap-2">
+          {showMyRecipesOnly && (
+            <View className="bg-purple-100 px-3 py-1 rounded-full flex-row items-center">
+              <Text className="text-purple-700 text-sm font-medium">My Recipes</Text>
+              <TouchableOpacity onPress={handleMyRecipesPress} className="ml-2">
+                <Ionicons name="close" size={16} color="#7C3AED" />
+              </TouchableOpacity>
+            </View>
+          )}
+          {showFavoritesOnly && (
+            <View className="bg-red-100 px-3 py-1 rounded-full flex-row items-center">
+              <Text className="text-red-700 text-sm font-medium">Favorites</Text>
+              <TouchableOpacity onPress={handleFavoritesPress} className="ml-2">
+                <Ionicons name="close" size={16} color="#DC2626" />
+              </TouchableOpacity>
+            </View>
+          )}
+          {selectedCategory && (
+            <View className="bg-orange-100 px-3 py-1 rounded-full flex-row items-center">
+              <Text className="text-orange-700 text-sm font-medium">
+                {categories.find(c => c.category === selectedCategory)?.name}
+              </Text>
+              <TouchableOpacity onPress={() => handleCategoryPress(selectedCategory)} className="ml-2">
+                <Ionicons name="close" size={16} color="#EA580C" />
+              </TouchableOpacity>
+            </View>
+          )}
+          {searchQuery && (
+            <View className="bg-blue-100 px-3 py-1 rounded-full flex-row items-center">
+              <Text className="text-blue-700 text-sm font-medium">"{searchQuery}"</Text>
+              <TouchableOpacity onPress={() => handleSearchChange('')} className="ml-2">
+                <Ionicons name="close" size={16} color="#2563EB" />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      )}
+
       {/* Quick Actions */}
       <View className="flex-row justify-between">
         {quickActions.map((action, index) => (
           <TouchableOpacity
             key={index}
-            onPress={() => router.push(action.route as any)}
+            onPress={() => handleQuickActionPress(action)}
             className="items-center"
           >
             <View 
@@ -249,12 +413,24 @@ const handleSearch = (query: string) => {
             className="items-center"
           >
             <View 
-              className="w-16 h-16 rounded-2xl items-center justify-center mb-2"
-              style={{ backgroundColor: `${category.color}20` }}
+              className={`w-16 h-16 rounded-2xl items-center justify-center mb-2 ${
+                selectedCategory === category.category ? 'opacity-100' : 'opacity-70'
+              }`}
+              style={{ 
+                backgroundColor: selectedCategory === category.category 
+                  ? category.color 
+                  : `${category.color}20` 
+              }}
             >
-              <Ionicons name={category.icon as any} size={28} color={category.color} />
+              <Ionicons 
+                name={category.icon as any} 
+                size={28} 
+                color={selectedCategory === category.category ? 'white' : category.color} 
+              />
             </View>
-            <Text className="text-sm font-medium text-gray-700 text-center">
+            <Text className={`text-sm font-medium text-center ${
+              selectedCategory === category.category ? 'text-gray-900' : 'text-gray-700'
+            }`}>
               {category.name}
             </Text>
           </TouchableOpacity>
@@ -295,7 +471,8 @@ const handleSearch = (query: string) => {
             onDelete={firebaseUser?.uid === item.authorId ? handleDeleteRecipe : undefined}
             onToggleFavorite={handleToggleFavorite}
             variant="featured"
-           showActions={false}          />
+            showActions={false}
+          />
         </View>
       )}
       keyExtractor={(item) => item.id!}
@@ -304,43 +481,88 @@ const handleSearch = (query: string) => {
 
   // Render user recipes grid with actions
   const renderUserRecipesGrid = () => (
-  <View className="px-4">
-    <View className="flex-row flex-wrap justify-end">  {/* 👈 right aligned */}
-      {userRecipes.map((recipe) => (
-        <View key={recipe.id} style={{ width: (width - 48) / 2 }}>
-          <RecipeCard
-            recipe={recipe}
-            onPress={handleRecipePress}
-            onEdit={handleEditRecipe}
-            onDelete={handleDeleteRecipe}
-            onToggleFavorite={handleToggleFavorite}
-            variant="default"
-            showActions={true}
-          />
-        </View>
-      ))}
+    <View className="px-4">
+      <View className="flex-row flex-wrap justify-end">
+        {userRecipes.map((recipe) => (
+          <View key={recipe.id} style={{ width: (width - 48) / 2 }}>
+            <RecipeCard
+              recipe={recipe}
+              onPress={handleRecipePress}
+              onEdit={handleEditRecipe}
+              onDelete={handleDeleteRecipe}
+              onToggleFavorite={handleToggleFavorite}
+              variant="default"
+              showActions={true}
+            />
+          </View>
+        ))}
+      </View>
     </View>
-  </View>
-)
+  )
+
+  // Render favorites grid
+  const renderFavoritesGrid = () => {
+    // Combine all recipes and remove duplicates by ID
+    const allRecipes = [...recentRecipes, ...popularRecipes, ...userRecipes];
+    const uniqueFavoriteRecipes = allRecipes.filter((recipe, index, self) => 
+      index === self.findIndex(r => r.id === recipe.id)
+    );
+
+    return (
+      <View className="px-4">
+        <View className="flex-row flex-wrap justify-between">
+          {uniqueFavoriteRecipes.map((recipe) => (
+            <View key={`fav-${recipe.id}`} style={{ width: (width - 48) / 2, marginBottom: 16 }}>
+              <RecipeCard
+                recipe={recipe}
+                onPress={handleRecipePress}
+                onEdit={firebaseUser?.uid === recipe.authorId ? handleEditRecipe : undefined}
+                onDelete={firebaseUser?.uid === recipe.authorId ? handleDeleteRecipe : undefined}
+                onToggleFavorite={handleToggleFavorite}
+                variant="default"
+                showActions={firebaseUser?.uid === recipe.authorId}
+              />
+            </View>
+          ))}
+        </View>
+      </View>
+    );
+  }
 
   // Render empty state
   const renderEmptyState = () => (
     <View className="items-center py-20 px-8">
       <View className="w-24 h-24 bg-orange-100 rounded-full items-center justify-center mb-4">
-        <Ionicons name="restaurant-outline" size={48} color="#FF6B35" />
+        <Ionicons 
+          name={showFavoritesOnly ? "heart-outline" : "restaurant-outline"} 
+          size={48} 
+          color="#FF6B35" 
+        />
       </View>
       <Text className="text-xl font-semibold text-gray-900 mb-2 text-center">
-        Welcome to FoodieFlow!
+        {showMyRecipesOnly 
+          ? "No My Recipes Found" 
+          : showFavoritesOnly 
+            ? "No Favorite Recipes" 
+            : "Welcome to FoodieFlow!"
+        }
       </Text>
       <Text className="text-gray-600 text-center mb-6 leading-6">
-        Start your culinary journey by adding your first recipe or exploring recipes from other chefs.
+        {showMyRecipesOnly 
+          ? "You haven't added any recipes matching the current filters." 
+          : showFavoritesOnly
+            ? "You haven't marked any recipes as favorites yet. Tap the heart icon on recipes to save them here."
+            : "Start your culinary journey by adding your first recipe or exploring recipes from other chefs."
+        }
       </Text>
-      <TouchableOpacity
-        onPress={() => router.push("/(dashboard)/recipies/new")}
-        className="bg-orange-500 px-6 py-3 rounded-xl"
-      >
-        <Text className="text-white font-semibold">Add Your First Recipe</Text>
-      </TouchableOpacity>
+      {!showFavoritesOnly && (
+        <TouchableOpacity
+          onPress={() => router.push("/(dashboard)/recipies/new")}
+          className="bg-orange-500 px-6 py-3 rounded-xl"
+        >
+          <Text className="text-white font-semibold">Add Your First Recipe</Text>
+        </TouchableOpacity>
+      )}
     </View>
   )
 
@@ -363,10 +585,10 @@ const handleSearch = (query: string) => {
       
       {hasContent ? (
         <>
-          {renderCategories()}
+          {!showMyRecipesOnly && !showFavoritesOnly && renderCategories()}
           
           {/* Recent Recipes */}
-          {recentRecipes.length > 0 && (
+          {!showMyRecipesOnly && !showFavoritesOnly && recentRecipes.length > 0 && (
             <View className="mb-6">
               {renderSectionHeader(
                 "Recent Recipes", 
@@ -378,7 +600,7 @@ const handleSearch = (query: string) => {
           )}
 
           {/* Popular Recipes */}
-          {popularRecipes.length > 0 && (
+          {!showMyRecipesOnly && !showFavoritesOnly && popularRecipes.length > 0 && (
             <View className="mb-6">
               {renderSectionHeader(
                 "Popular This Week", 
@@ -389,12 +611,24 @@ const handleSearch = (query: string) => {
             </View>
           )}
 
-          {/* User's Recipes */}
-          {userRecipes.length > 0 && (
+          {/* Favorite Recipes */}
+          {showFavoritesOnly && (recentRecipes.length > 0 || popularRecipes.length > 0 || userRecipes.length > 0) && (
             <View className="mb-8">
               {renderSectionHeader(
-                "Your Recipes", 
-                "Your culinary creations",
+                "Favorite Recipes", 
+                "Your saved favorite recipes",
+                () => router.push("/(dashboard)/recipies")
+              )}
+              {renderFavoritesGrid()}
+            </View>
+          )}
+
+          {/* User's Recipes */}
+          {userRecipes.length > 0 && !showFavoritesOnly && (
+            <View className="mb-8">
+              {renderSectionHeader(
+                showMyRecipesOnly ? "My Recipes" : "Your Recipes", 
+                showMyRecipesOnly ? "All your culinary creations" : "Your culinary creations",
                 () => router.push("/(dashboard)/recipies")
               )}
               {renderUserRecipesGrid()}
